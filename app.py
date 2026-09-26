@@ -58,7 +58,13 @@ def scrape_product():
     if use_mock:
         raw_reviews = scraper.generate_mock_reviews(product_name)
     else:
-        raw_reviews = scraper.scrape_reviews(product_name, source)
+        try:
+            raw_reviews = scraper.scrape_reviews(product_name, source)
+        except Exception as exc:
+            return jsonify({
+                'error': 'Live scraping is unavailable in this deployment',
+                'message': 'Use mock data or deploy on a machine with a browser runtime installed.'
+            }), 400
 
     if not raw_reviews:
         return jsonify({'error': 'No reviews found / scraping failed'}), 404
@@ -128,4 +134,4 @@ def get_analytics(product_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

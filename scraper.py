@@ -11,8 +11,10 @@ For development, demos, and building/testing the dashboard, use the mock
 data generator below — it produces realistic review data instantly with
 no network access required.
 """
+import os
 import random
 import re
+import shutil
 import time
 from datetime import datetime, timedelta
 
@@ -130,7 +132,16 @@ class ReviewScraper:
         """
         Real scraper using Selenium. Requires Google Chrome installed locally.
         webdriver-manager auto-downloads a matching chromedriver.
+        This is intentionally disabled in Vercel/serverless deployments where
+        a browser runtime is not available.
         """
+        if os.environ.get('VERCEL') == '1':
+            raise RuntimeError('Live scraping is disabled in serverless deployments.')
+
+        chrome_binary = shutil.which('google-chrome') or shutil.which('chromium') or shutil.which('chromium-browser')
+        if not chrome_binary:
+            raise RuntimeError('No Chrome/Chromium browser found on this machine.')
+
         from selenium import webdriver
         from selenium.webdriver.chrome.service import Service
         from selenium.webdriver.chrome.options import Options

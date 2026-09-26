@@ -15,7 +15,12 @@ def _get_db_path():
     - Normal script run: next to database.py.
     - Packaged .exe (PyInstaller): next to the .exe itself, NOT the temp
       extraction folder (sys._MEIPASS), which is deleted after each run.
+    - Vercel/serverless: use /tmp so the file is writable in ephemeral
+      serverless storage.
     """
+    if os.environ.get('VERCEL') == '1':
+        return '/tmp/sentiment_data.db'
+
     if getattr(sys, 'frozen', False):
         base_dir = os.path.dirname(sys.executable)
     else:
@@ -29,6 +34,9 @@ DB_PATH = _get_db_path()
 class Database:
     def __init__(self, db_path=DB_PATH):
         self.db_path = db_path
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
         self._init_db()
 
     def _connect(self):
